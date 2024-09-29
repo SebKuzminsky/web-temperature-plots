@@ -7,5 +7,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let js = serde_json::to_string(&s).unwrap();
     println!("js = {}", js);
 
+    let new_s = serde_json::from_str::<yew_hello_world::Stats>(&js).unwrap();
+    println!("back to s: {:?}", new_s);
+
     Ok(())
 }
