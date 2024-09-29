@@ -1,0 +1,9 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+yew-hello-world = { path = "../.." }
+serde = { version="1.0" }
+serde_json = { version="1.0" }
