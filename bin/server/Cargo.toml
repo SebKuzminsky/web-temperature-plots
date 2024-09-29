@@ -7,3 +7,4 @@ edition = "2021"
 yew-hello-world = { path = "../.." }
 serde = { version="1.0" }
 serde_json = { version="1.0" }
+tokio = { version="1.40", features=["full"] }
