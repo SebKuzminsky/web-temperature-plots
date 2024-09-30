@@ -2,40 +2,51 @@ use futures::prelude::*;
 
 #[tokio::main]
 async fn main() {
-    let s = yew_hello_world::Stats {
+    let stats = yew_hello_world::Stats {
         temperatures: [ 0.1, 1.0, 2.0, 3.0, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.10 ],
     };
-    println!("s = {:?}", s);
+    println!("stats = {:?}", stats);
 
-    let js = serde_json::to_string(&s).unwrap();
+    let js = serde_json::to_string(&stats).unwrap();
     println!("js = {}", js);
 
-    let new_s = serde_json::from_str::<yew_hello_world::Stats>(&js).unwrap();
-    println!("back to s: {:?}", new_s);
+    let new_stats = serde_json::from_str::<yew_hello_world::Stats>(&js).unwrap();
+    println!("back to s: {:?}", new_stats);
 
     let listener = tokio::net::TcpListener::bind("localhost:7654").await.unwrap();
     loop {
         let (socket, _) = listener.accept().await.unwrap();
         println!("accepted");
 
-        let length_delimited = tokio_util::codec::FramedRead::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
+        // let length_delimited = tokio_util::codec::FramedWrite::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
 
-        let mut deserialized = tokio_serde::SymmetricallyFramed::new(
-            length_delimited,
-            tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
-        );
+        // let mut deserialized = tokio_serde::SymmetricallyFramed::new(
+        //     length_delimited,
+        //     tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
+        // );
 
         tokio::spawn(async move {
-            loop {
-                match deserialized.next().await {
-                    None => println!("why am i awake??"),
-                    Some(Ok(s)) => println!("got s: {:?}", s),
-                    Some(Err(e)) => {
-                        println!("eror while reading socket: {:?}", e);
-                        return;
-                    },
-                }
+            let length_delimited = tokio_util::codec::FramedWrite::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
+
+            let mut serialized = tokio_serde::SymmetricallyFramed::new(
+                length_delimited,
+                tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
+            );
+
+            while let Ok(_) = serialized.send(stats.clone()).await {
+
+                // match deserialized.next().await {
+                //     None => println!("why am i awake??"),
+                //     Some(Ok(s)) => println!("got s: {:?}", s),
+                //     Some(Err(e)) => {
+                //         println!("eror while reading socket: {:?}", e);
+                //         return;
+                //     },
+                // }
+
+                tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
             }
+            println!("something went wrong with the socket, bye");
         });
     }
 }
