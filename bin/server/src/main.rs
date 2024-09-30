@@ -1,9 +1,4 @@
-async fn process_socket<T: std::fmt::Debug>(socket: T) -> Result<(), Box<dyn std::error::Error>> {
-    loop {
-        println!("processing socket {socket:?}");
-        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
-    }
-}
+use futures::prelude::*;
 
 #[tokio::main]
 async fn main() {
@@ -22,11 +17,25 @@ async fn main() {
     loop {
         let (socket, _) = listener.accept().await.unwrap();
         println!("accepted");
+
+        let length_delimited = tokio_util::codec::FramedRead::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
+
+        let mut deserialized = tokio_serde::SymmetricallyFramed::new(
+            length_delimited,
+            tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
+        );
+
         tokio::spawn(async move {
-            if let Err(e) = process_socket(socket).await {
-                println!("error processing socket: {:?}", e);
+            loop {
+                match deserialized.next().await {
+                    None => println!("why am i awake??"),
+                    Some(Ok(s)) => println!("got s: {:?}", s),
+                    Some(Err(e)) => {
+                        println!("eror while reading socket: {:?}", e);
+                        return;
+                    },
+                }
             }
         });
-        // process_socket(socket);
     }
 }
