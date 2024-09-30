@@ -1,13 +1,14 @@
 [package]
-name = "server"
+name = "webui-hostside-tools"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-yew-hello-world = { path = "../.." }
+yew-hello-world = { path = ".." }
+
 futures = { version="0.3" }
-serde = { version="1.0" }
 serde_json = { version="1.0" }
-tokio = { version="1.40", features=["full"] }
+serde = { version="1.0" }
 tokio-serde = { version = "0.9", features=["json"] }
 tokio-util = { version = "0.7", features=["codec"] }
+tokio = { version="1.40", features=["full"] }
