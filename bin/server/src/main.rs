@@ -18,13 +18,6 @@ async fn main() {
         let (socket, _) = listener.accept().await.unwrap();
         println!("accepted");
 
-        // let length_delimited = tokio_util::codec::FramedWrite::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
-
-        // let mut deserialized = tokio_serde::SymmetricallyFramed::new(
-        //     length_delimited,
-        //     tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
-        // );
-
         tokio::spawn(async move {
             let length_delimited = tokio_util::codec::FramedWrite::new(socket, tokio_util::codec::LengthDelimitedCodec::new());
 
@@ -34,16 +27,6 @@ async fn main() {
             );
 
             while let Ok(_) = serialized.send(stats.clone()).await {
-
-                // match deserialized.next().await {
-                //     None => println!("why am i awake??"),
-                //     Some(Ok(s)) => println!("got s: {:?}", s),
-                //     Some(Err(e)) => {
-                //         println!("eror while reading socket: {:?}", e);
-                //         return;
-                //     },
-                // }
-
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
             }
             println!("something went wrong with the socket, bye");
