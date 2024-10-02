@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+futures = "0.3"
 gloo-console = "0.3"
+gloo-net = { version = "0.2", features = ["websocket"] }
+serde_json = { version="1.0" }
+serde = { version="1.0", features=["derive"] }
+wasm-bindgen-futures = "0.4"
 yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
-serde = { version="1.0" }

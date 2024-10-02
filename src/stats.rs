@@ -1,15 +1,25 @@
 use yew::prelude::*;
 use gloo_console::log;
 
-#[derive(Properties, PartialEq)]
-pub struct Props {
-    pub temperature: f32,
+//use testbench_util::orion::orion::Stats;
+
+
+#[derive(serde::Deserialize, Clone, Copy, Debug, Default, PartialEq)]
+pub struct Stats {
+    pub temperatures: [f32; 11],
 }
 
-#[function_component(Stats)]
-pub fn stats(props: &Props) -> Html {
-    log!("stats");
+
+#[derive(Properties, Clone, Copy, Debug, PartialEq)]
+pub struct Props {
+    pub stats: Stats,
+}
+
+
+#[function_component(StatsDisplay)]
+pub fn stats_display(Props { stats }: &Props) -> Html {
+    log!("StatsDisplay");
     html! {
-        <p>{"stats: "}{props.temperature}</p>
+        <p>{format!("{:#?}", *stats)}</p>
     }
 }
