@@ -12,3 +12,5 @@ serde = { version="1.0" }
 tokio-serde = { version = "0.9", features=["json"] }
 tokio-util = { version = "0.7", features=["codec"] }
 tokio = { version="1.40", features=["full"] }
+tokio-websockets = { version = "0.10", features = ["server", "native-tls", "openssl"] }
+thiserror = "1.0"
