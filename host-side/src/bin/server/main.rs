@@ -1,10 +1,10 @@
 use futures::prelude::*;
 
 
-async fn handle_client(
+async fn handle_tcp_client(
     socket: tokio::net::TcpStream,
     stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>
-) -> Result<(), std::io::Error> {
+) {
     let client_id = format!("{:?}", &socket);
 
     let length_delimited = tokio_util::codec::FramedWrite::new(
@@ -12,17 +12,31 @@ async fn handle_client(
         tokio_util::codec::LengthDelimitedCodec::new()
     );
 
-    let mut serialized = tokio_serde::SymmetricallyFramed::new(
+    let serialized = tokio_serde::SymmetricallyFramed::new(
         length_delimited,
         tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
     );
 
+    println!("sending to tcp client {client_id}");
+    match handle_tcp_client_inner(serialized, stats).await {
+        Ok(()) => println!("done with client {:?}: Ok!", client_id),
+        Err(e) => println!("error with client {:?}: {:#?}", client_id, e),
+    }
+}
+
+
+async fn handle_tcp_client_inner(
+    mut serialized: tokio_serde::SymmetricallyFramed<
+        tokio_util::codec::FramedWrite<tokio::net::TcpStream, tokio_util::codec::LengthDelimitedCodec>,
+        yew_hello_world::Stats,
+        tokio_serde::formats::Json<yew_hello_world::Stats, yew_hello_world::Stats>>,
+    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
+) -> Result<(), Error> {
     loop {
-        println!("sending to {client_id}");
-        {
-            let locked_stats = stats.lock().await;
-            serialized.send(*locked_stats).await?;
-        }
+        let locked_stats = stats.lock().await;
+        println!("{:#?}", *locked_stats);
+        serialized.send(*locked_stats).await?;
+
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
     }
 }
@@ -30,7 +44,7 @@ async fn handle_client(
 
 async fn poll_stats(
     stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>
-) -> Result<(), std::io::Error> {
+) {
     loop {
         {
             let mut locked_stats = stats.lock().await;
@@ -39,6 +53,19 @@ async fn poll_stats(
             locked_stats.temperatures[2] += 0.2;
         }
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+    }
+}
+
+
+async fn tcp_server(
+    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
+) {
+    let listener = tokio::net::TcpListener::bind("localhost:7654").await.unwrap();
+    println!("listening for TCP connections {:#?}", listener);
+    loop {
+        let (socket, _) = listener.accept().await.unwrap();
+        println!("accepted tcp: {:#?}", socket);
+        tokio::spawn(handle_tcp_client(socket, std::sync::Arc::clone(&stats)));
     }
 }
 
@@ -58,12 +85,8 @@ async fn main() {
         println!("back to s: {:?}", new_stats);
     }
 
-    tokio::spawn(poll_stats(std::sync::Arc::clone(&stats)));
-
-    let listener = tokio::net::TcpListener::bind("localhost:7654").await.unwrap();
-    loop {
-        let (socket, _) = listener.accept().await.unwrap();
-        println!("accepted");
-        tokio::spawn(handle_client(socket, std::sync::Arc::clone(&stats)));
-    }
+    let (_, _) = tokio::join!(
+        tokio::spawn(poll_stats(std::sync::Arc::clone(&stats))),
+        tokio::spawn(tcp_server(std::sync::Arc::clone(&stats))),
+    );
 }
