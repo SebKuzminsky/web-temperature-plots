@@ -100,7 +100,7 @@ async fn poll_stats(
 async fn tcp_server(
     stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
 ) {
-    let listener = tokio::net::TcpListener::bind("localhost:7654").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:7654").await.unwrap();
     println!("listening for TCP connections {:#?}", listener);
     loop {
         let (socket, _) = listener.accept().await.unwrap();
@@ -126,7 +126,7 @@ async fn ws_server(
 async fn ws_server_inner(
     stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
 ) -> Result<(), Error> {
-    let tcp_listener = tokio::net::TcpListener::bind("localhost:7655").await?;
+    let tcp_listener = tokio::net::TcpListener::bind("127.0.0.1:7655").await?;
     println!("listening for WS connections {:#?}", tcp_listener);
     loop {
         let (tcp_stream, _) = tcp_listener.accept().await?;
