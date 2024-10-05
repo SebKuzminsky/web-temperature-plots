@@ -14,26 +14,26 @@ mod counter;
 
 
 async fn make_up_stats(stats_cb: Callback<stats::Stats>) {
-    log!("connecting to stats server");
-
     loop {
-        let mut ws = match gloo_net::websocket::futures::WebSocket::open("ws://127.0.0.1:7655/") {
-            Ok(ws) => ws,
+        match get_stats_inner(&stats_cb).await {
+            Ok(_) => (),
             Err(e) => {
-                log!(format!("error connecting: {:#?}", e));
-                sleep(Duration::from_secs(1)).await;
-                continue;
+                log!(format!("error getting stats: {:#?}", e));
             },
         };
-        println!("connected");
+        sleep(Duration::from_secs(1)).await;
+    }
+}
 
-        loop {
-            while let Some(Ok(gloo_net::websocket::Message::Text(msg))) = ws.next().await {
-                let stats: stats::Stats = serde_json::from_str(&msg).unwrap();
-                stats_cb.emit(stats);
-            }
-            log!("disconnected");
+async fn get_stats_inner(stats_cb: &Callback<stats::Stats>) -> Result<(), anyhow::Error> {
+    let mut ws = gloo_net::websocket::futures::WebSocket::open("ws://127.0.0.1:7655/")?;
+    println!("connected");
+    loop {
+        while let Some(Ok(gloo_net::websocket::Message::Text(msg))) = ws.next().await {
+            let stats: stats::Stats = serde_json::from_str(&msg)?;
+            stats_cb.emit(stats);
         }
+        log!("disconnected");
     }
 }
 
