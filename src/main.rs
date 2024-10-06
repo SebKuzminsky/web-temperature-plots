@@ -66,6 +66,8 @@ impl Component for App {
         let stats_cb = ctx.link().callback(Msg::Stats);
         spawn_local(make_up_stats(stats_cb));
 
+        ctx.link().send_message(Msg::Redraw);
+
         log!("App::create() is done");
         Self {
             stats: None,
