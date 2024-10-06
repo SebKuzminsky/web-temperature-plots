@@ -142,17 +142,6 @@ async fn ws_server_inner(
 async fn main() {
     let stats = std::sync::Arc::new(tokio::sync::Mutex::new(yew_hello_world::Stats::new()));
 
-    // {
-    //     let s = stats.lock().await;
-    //     println!("stats = {:?}", *s);
-
-    //     let js = serde_json::to_string(&*s).unwrap();
-    //     println!("js = {}", js);
-
-    //     let new_stats = serde_json::from_str::<yew_hello_world::Stats>(&js).unwrap();
-    //     println!("back to s: {:?}", new_stats);
-    // }
-
     let (_, _, _) = tokio::join!(
         tokio::spawn(poll_stats(std::sync::Arc::clone(&stats))),
         tokio::spawn(tcp_server(std::sync::Arc::clone(&stats))),
