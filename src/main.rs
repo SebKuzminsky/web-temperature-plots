@@ -44,7 +44,7 @@ async fn get_stats_inner(stats_cb: &Callback<stats::Stats>) -> Result<(), anyhow
 #[derive(Clone, PartialEq)]
 pub struct App {
     stats: Vec<stats::Stats>,
-    canvas: NodeRef,
+    canvas: Vec<NodeRef>,
 }
 
 
@@ -69,7 +69,19 @@ impl Component for App {
         log!("App::create() is done");
         Self {
             stats: vec![],
-            canvas: NodeRef::default(),
+            canvas: vec![
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+                NodeRef::default(),
+            ],
         }
     }
 
@@ -83,44 +95,55 @@ impl Component for App {
             },
 
             Msg::Redraw => {
-                // massage data into the format plotters wants
-                let mut data: Vec<(f32, f32)> = vec![];
-                for (i, &s) in self.stats.iter().enumerate() {
-                    data.push((i as f32, s.temperatures[1]));
+                for plot in 0..=10 {
+                    log!(format!("plotting {plot}"));
+
+                    // massage data into the format plotters wants
+                    let mut data: Vec<(f32, f32)> = vec![];
+                    for (i, &s) in self.stats.iter().enumerate() {
+                        data.push((i as f32, s.temperatures[plot]));
+                    }
+                    let x_max = data.len() - 1;
+                    let y_max = self.stats
+                        .iter()
+                        .map(|s| s.temperatures[plot])
+                        .reduce(f32::max)
+                        .unwrap() + 1.0;
+                    let y_min = self.stats
+                        .iter()
+                        .map(|s| s.temperatures[plot])
+                        .reduce(f32::min)
+                        .unwrap() - 1.0;
+                    let line_series = LineSeries::new(data, &RED);
+
+                    let element: HtmlCanvasElement = self.canvas[plot].cast().unwrap();
+                    let _rect = element.get_bounding_client_rect();
+                    element.set_width(600);
+                    element.set_height(400);
+
+                    let backend = CanvasBackend::with_canvas_object(element).unwrap();
+                    let drawing_area = backend.into_drawing_area();
+                    drawing_area.fill(&RGBColor(240,240,240)).unwrap();
+
+                    let mut chart = ChartBuilder::on(&drawing_area)
+                        .caption(format!("Temperature {plot}"), ("sans-serif", 14).into_font())
+                        .margin(5)
+                        .x_label_area_size(25)
+                        .y_label_area_size(50)
+                        .build_cartesian_2d(0_f32..(x_max as f32), y_min..y_max).unwrap();
+
+                    chart.configure_mesh()
+                        .x_label_formatter(&|x| format!("{}", x.round()))
+                        .y_label_formatter(&|y| format!("{y:.1}"))
+                        .draw()
+                        .unwrap();
+
+                    chart
+                        .draw_series(line_series).unwrap()
+                        .label("y = x^2")
+                        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
                 }
-                log!(format!("{:?}", data));
-                let x_max = data.len() - 1;
-                let y_max = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::max).unwrap() + 1.0;
-                let y_min = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::min).unwrap() - 1.0;
-                let line_series = LineSeries::new(data, &RED);
 
-                let element: HtmlCanvasElement = self.canvas.cast().unwrap();
-                let rect = element.get_bounding_client_rect();
-                log!(format!("bounding rectangle width={} height={}", rect.width(), rect.height()));
-                element.set_width(640);
-                element.set_height(480);
-
-                let backend = CanvasBackend::with_canvas_object(element).unwrap();
-                let drawing_area = backend.into_drawing_area();
-                drawing_area.fill(&RGBColor(240,240,240)).unwrap();
-
-                let mut chart = ChartBuilder::on(&drawing_area)
-                    .caption("Temperature", ("sans-serif", 14).into_font())
-                    .margin(5)
-                    .x_label_area_size(25)
-                    .y_label_area_size(50)
-                    .build_cartesian_2d(0_f32..(x_max as f32), y_min..y_max).unwrap();
-
-                chart.configure_mesh()
-                    .x_label_formatter(&|x| format!("{}", x.round()))
-                    .y_label_formatter(&|y| format!("{y:.2}"))
-                    .draw()
-                    .unwrap();
-
-                chart
-                    .draw_series(line_series).unwrap()
-                    .label("y = x^2")
-                    .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
                 return false;
             },
 
@@ -154,7 +177,17 @@ impl Component for App {
                 <hr/>
                 {stats_html}
                 <hr/>
-                <canvas ref={self.canvas.clone()}/>
+                <canvas ref={self.canvas[0].clone()}/>
+                <canvas ref={self.canvas[1].clone()}/>
+                <canvas ref={self.canvas[2].clone()}/>
+                <canvas ref={self.canvas[3].clone()}/>
+                <canvas ref={self.canvas[4].clone()}/>
+                <canvas ref={self.canvas[5].clone()}/>
+                <canvas ref={self.canvas[6].clone()}/>
+                <canvas ref={self.canvas[7].clone()}/>
+                <canvas ref={self.canvas[8].clone()}/>
+                <canvas ref={self.canvas[9].clone()}/>
+                <canvas ref={self.canvas[10].clone()}/>
             </>
         }
     }
