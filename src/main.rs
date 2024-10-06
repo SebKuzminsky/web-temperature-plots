@@ -90,8 +90,8 @@ impl Component for App {
                 }
                 log!(format!("{:?}", data));
                 let x_max = data.len() - 1;
-                let y_max = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::max).unwrap();
-                let y_min = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::min).unwrap();
+                let y_max = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::max).unwrap() + 1.0;
+                let y_min = self.stats.iter().map(|s| s.temperatures[1]).reduce(f32::min).unwrap() - 1.0;
                 let line_series = LineSeries::new(data, &RED);
 
                 let element: HtmlCanvasElement = self.canvas.cast().unwrap();
