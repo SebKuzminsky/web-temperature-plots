@@ -16,7 +16,7 @@ mod stats;
 mod counter;
 
 
-async fn make_up_stats(stats_cb: Callback<stats::Stats>) {
+async fn get_stats(stats_cb: Callback<stats::Stats>) {
     loop {
         match get_stats_inner(&stats_cb).await {
             Ok(_) => (),
@@ -64,7 +64,7 @@ impl Component for App {
         log!("App::create()");
 
         let stats_cb = ctx.link().callback(Msg::Stats);
-        spawn_local(make_up_stats(stats_cb));
+        spawn_local(get_stats(stats_cb));
 
         log!("App::create() is done");
         Self {
