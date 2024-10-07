@@ -126,8 +126,24 @@ impl Component for App {
 
                     let element: web_sys::HtmlCanvasElement = plot.canvas.cast().unwrap();
                     let _rect = element.get_bounding_client_rect();
-                    element.set_width(600);
-                    element.set_height(400);
+                    let window_width = web_sys::window()
+                        .expect("There should be a window")
+                        .inner_width()
+                        .expect("the windows should have Some width")
+                        .as_f64()
+                        .expect("the width should be a numer")
+                        as u32;
+                    let window_height = web_sys::window()
+                        .expect("There should be a window")
+                        .inner_height()
+                        .expect("the windows should have Some height")
+                        .as_f64()
+                        .expect("the height should be a number")
+                        as u32;
+                    let width = window_width - 30;
+                    let height = std::cmp::min(window_height - 30, window_width * 3/4);
+                    element.set_width(width);
+                    element.set_height(height);
 
                     let backend = CanvasBackend::with_canvas_object(element).unwrap();
                     let drawing_area = backend.into_drawing_area();
@@ -185,17 +201,19 @@ impl Component for App {
                 <hr/>
                 {stats_html}
                 <hr/>
-                <canvas ref={self.plots[0].canvas.clone()}/>
-                <canvas ref={self.plots[1].canvas.clone()}/>
-                <canvas ref={self.plots[2].canvas.clone()}/>
-                <canvas ref={self.plots[3].canvas.clone()}/>
-                <canvas ref={self.plots[4].canvas.clone()}/>
-                <canvas ref={self.plots[5].canvas.clone()}/>
-                <canvas ref={self.plots[6].canvas.clone()}/>
-                <canvas ref={self.plots[7].canvas.clone()}/>
-                <canvas ref={self.plots[8].canvas.clone()}/>
-                <canvas ref={self.plots[9].canvas.clone()}/>
-                <canvas ref={self.plots[10].canvas.clone()}/>
+                <center>
+                    <canvas ref={self.plots[0].canvas.clone()}/>
+                    <canvas ref={self.plots[1].canvas.clone()}/>
+                    <canvas ref={self.plots[2].canvas.clone()}/>
+                    <canvas ref={self.plots[3].canvas.clone()}/>
+                    <canvas ref={self.plots[4].canvas.clone()}/>
+                    <canvas ref={self.plots[5].canvas.clone()}/>
+                    <canvas ref={self.plots[6].canvas.clone()}/>
+                    <canvas ref={self.plots[7].canvas.clone()}/>
+                    <canvas ref={self.plots[8].canvas.clone()}/>
+                    <canvas ref={self.plots[9].canvas.clone()}/>
+                    <canvas ref={self.plots[10].canvas.clone()}/>
+                </center>
             </>
         }
     }
