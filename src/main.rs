@@ -97,7 +97,7 @@ impl Component for App {
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        log!(format!("App::update(msg={:?})", msg));
+        // log!(format!("App::update(msg={:?})", msg));
         match msg {
             Msg::Stats(s) => {
                 // log!(format!("got stats: {:#?}", s));
@@ -161,7 +161,7 @@ impl Component for App {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        log!("App::view()");
+        // log!("App::view()");
 
         // insert an svg into the html:
         // let svg_string = draw_things_with_plotters();
@@ -203,6 +203,6 @@ impl Component for App {
 
 
 fn main() {
-    log!("started!");
+    // log!("started!");
     yew::Renderer::<App>::new().render();
 }
