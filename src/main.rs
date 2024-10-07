@@ -1,13 +1,8 @@
-use std::time::Duration;
-use yew::platform::spawn_local;
-use yew::platform::time::sleep;
-use yew::Callback;
 use yew::{html, Component, Context, Html};
 
 use yew::prelude::*;
 use plotters::prelude::*;
 use plotters_canvas::CanvasBackend;
-use web_sys::HtmlCanvasElement;
 use gloo_console::log;
 use futures::StreamExt;
 
@@ -16,7 +11,7 @@ mod stats;
 mod counter;
 
 
-async fn get_stats(stats_cb: Callback<stats::Stats>) {
+async fn get_stats(stats_cb: yew::Callback<stats::Stats>) {
     loop {
         match get_stats_inner(&stats_cb).await {
             Ok(_) => (),
@@ -24,11 +19,11 @@ async fn get_stats(stats_cb: Callback<stats::Stats>) {
                 log!(format!("error getting stats: {:#?}", e));
             },
         };
-        sleep(Duration::from_secs(1)).await;
+        yew::platform::time::sleep(std::time::Duration::from_secs(1)).await;
     }
 }
 
-async fn get_stats_inner(stats_cb: &Callback<stats::Stats>) -> Result<(), anyhow::Error> {
+async fn get_stats_inner(stats_cb: &yew::Callback<stats::Stats>) -> Result<(), anyhow::Error> {
     let mut ws = gloo_net::websocket::futures::WebSocket::open("ws://127.0.0.1:7655/")?;
     println!("connected");
     loop {
@@ -80,7 +75,7 @@ impl Component for App {
         log!("App::create()");
 
         let stats_cb = ctx.link().callback(Msg::Stats);
-        spawn_local(get_stats(stats_cb));
+        yew::platform::spawn_local(get_stats(stats_cb));
 
         log!("App::create() is done");
         Self {
@@ -129,7 +124,7 @@ impl Component for App {
                         .unwrap() - 1.0;
                     let line_series = LineSeries::new(plot.data.clone(), &RED);
 
-                    let element: HtmlCanvasElement = plot.canvas.cast().unwrap();
+                    let element: web_sys::HtmlCanvasElement = plot.canvas.cast().unwrap();
                     let _rect = element.get_bounding_client_rect();
                     element.set_width(600);
                     element.set_height(400);
