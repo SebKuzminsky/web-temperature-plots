@@ -41,10 +41,26 @@ async fn get_stats_inner(stats_cb: &Callback<stats::Stats>) -> Result<(), anyhow
 }
 
 
+#[derive(Clone, Debug, PartialEq)]
+struct Plot {
+    canvas: NodeRef,
+    data: Vec<(f32, f32)>,
+}
+
+impl Plot {
+    pub fn default() -> Self {
+        Self {
+            canvas: NodeRef::default(),
+            data: vec![],
+        }
+    }
+}
+
+
 #[derive(Clone, PartialEq)]
 pub struct App {
     stats: Vec<stats::Stats>,
-    canvas: Vec<NodeRef>,
+    plots: [Plot; 11],
 }
 
 
@@ -69,18 +85,18 @@ impl Component for App {
         log!("App::create() is done");
         Self {
             stats: vec![],
-            canvas: vec![
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
-                NodeRef::default(),
+            plots: [
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
+                Plot::default(),
             ],
         }
     }
@@ -91,32 +107,29 @@ impl Component for App {
             Msg::Stats(s) => {
                 // log!(format!("got stats: {:#?}", s));
                 self.stats.push(s);
+                for i in 0..=10 {
+                    self.plots[i].data.push((self.plots[i].data.len() as f32, s.temperatures[i]));
+                }
                 ctx.link().send_message(Msg::Redraw);
             },
 
             Msg::Redraw => {
-                for plot in 0..=10 {
-                    log!(format!("plotting {plot}"));
-
+                for (index, plot) in self.plots.iter().enumerate() {
                     // massage data into the format plotters wants
-                    let mut data: Vec<(f32, f32)> = vec![];
-                    for (i, &s) in self.stats.iter().enumerate() {
-                        data.push((i as f32, s.temperatures[plot]));
-                    }
-                    let x_max = data.len() - 1;
-                    let y_max = self.stats
+                    let x_max = plot.data.len() - 1;
+                    let y_max = plot.data
                         .iter()
-                        .map(|s| s.temperatures[plot])
+                        .map(|item| item.1)
                         .reduce(f32::max)
                         .unwrap() + 1.0;
-                    let y_min = self.stats
+                    let y_min = plot.data
                         .iter()
-                        .map(|s| s.temperatures[plot])
+                        .map(|item| item.1)
                         .reduce(f32::min)
                         .unwrap() - 1.0;
-                    let line_series = LineSeries::new(data, &RED);
+                    let line_series = LineSeries::new(plot.data.clone(), &RED);
 
-                    let element: HtmlCanvasElement = self.canvas[plot].cast().unwrap();
+                    let element: HtmlCanvasElement = plot.canvas.cast().unwrap();
                     let _rect = element.get_bounding_client_rect();
                     element.set_width(600);
                     element.set_height(400);
@@ -126,7 +139,7 @@ impl Component for App {
                     drawing_area.fill(&RGBColor(240,240,240)).unwrap();
 
                     let mut chart = ChartBuilder::on(&drawing_area)
-                        .caption(format!("Temperature {plot}"), ("sans-serif", 14).into_font())
+                        .caption(format!("Temperature {index}"), ("sans-serif", 14).into_font())
                         .margin(5)
                         .x_label_area_size(25)
                         .y_label_area_size(50)
@@ -177,17 +190,17 @@ impl Component for App {
                 <hr/>
                 {stats_html}
                 <hr/>
-                <canvas ref={self.canvas[0].clone()}/>
-                <canvas ref={self.canvas[1].clone()}/>
-                <canvas ref={self.canvas[2].clone()}/>
-                <canvas ref={self.canvas[3].clone()}/>
-                <canvas ref={self.canvas[4].clone()}/>
-                <canvas ref={self.canvas[5].clone()}/>
-                <canvas ref={self.canvas[6].clone()}/>
-                <canvas ref={self.canvas[7].clone()}/>
-                <canvas ref={self.canvas[8].clone()}/>
-                <canvas ref={self.canvas[9].clone()}/>
-                <canvas ref={self.canvas[10].clone()}/>
+                <canvas ref={self.plots[0].canvas.clone()}/>
+                <canvas ref={self.plots[1].canvas.clone()}/>
+                <canvas ref={self.plots[2].canvas.clone()}/>
+                <canvas ref={self.plots[3].canvas.clone()}/>
+                <canvas ref={self.plots[4].canvas.clone()}/>
+                <canvas ref={self.plots[5].canvas.clone()}/>
+                <canvas ref={self.plots[6].canvas.clone()}/>
+                <canvas ref={self.plots[7].canvas.clone()}/>
+                <canvas ref={self.plots[8].canvas.clone()}/>
+                <canvas ref={self.plots[9].canvas.clone()}/>
+                <canvas ref={self.plots[10].canvas.clone()}/>
             </>
         }
     }
