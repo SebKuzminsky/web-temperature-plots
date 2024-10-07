@@ -59,7 +59,7 @@ impl Plot {
 
 #[derive(Clone, PartialEq)]
 pub struct App {
-    stats: Vec<stats::Stats>,
+    stats: Option<stats::Stats>,
     plots: [Plot; 11],
 }
 
@@ -84,7 +84,7 @@ impl Component for App {
 
         log!("App::create() is done");
         Self {
-            stats: vec![],
+            stats: None,
             plots: [
                 Plot::default(),
                 Plot::default(),
@@ -106,7 +106,7 @@ impl Component for App {
         match msg {
             Msg::Stats(s) => {
                 // log!(format!("got stats: {:#?}", s));
-                self.stats.push(s);
+                self.stats = Some(s);
                 for i in 0..=10 {
                     self.plots[i].data.push((self.plots[i].data.len() as f32, s.temperatures[i]));
                 }
@@ -179,7 +179,7 @@ impl Component for App {
         // let vnode = VNode::VRef(node);
         // vnode.into()
 
-        let stats_html = match self.stats.last() {
+        let stats_html = match self.stats {
             None => html!{<p>{"Waiting for stats..."}</p>},
             Some(s) => html!{<p>{format!("{:#?}", s)}</p>},
         };
