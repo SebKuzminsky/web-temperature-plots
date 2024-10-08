@@ -1,5 +1,5 @@
 [package]
-name = "yew-hello-world"
+name = "web-temperature-plots"
 version = "0.1.0"
 edition = "2021"
 

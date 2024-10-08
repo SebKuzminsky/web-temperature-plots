@@ -16,7 +16,7 @@ async fn main() {
 
         let mut deserialized = tokio_serde::SymmetricallyFramed::new(
             length_delimited,
-            tokio_serde::formats::SymmetricalJson::<yew_hello_world::Stats>::default()
+            tokio_serde::formats::SymmetricalJson::<web_temperature_plots::Stats>::default()
         );
 
         loop {

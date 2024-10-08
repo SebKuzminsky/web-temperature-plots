@@ -4,7 +4,7 @@ use crate::error::Error;
 
 
 pub async fn ws_server(
-    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
 ) {
     loop {
         match ws_server_inner(std::sync::Arc::clone(&stats)).await {
@@ -17,7 +17,7 @@ pub async fn ws_server(
 
 
 async fn ws_server_inner(
-    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>,
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
 ) -> Result<(), Error> {
     let tcp_listener = tokio::net::TcpListener::bind("127.0.0.1:7655").await?;
     println!("listening for WS connections {:#?}", tcp_listener);
@@ -33,7 +33,7 @@ async fn ws_server_inner(
 
 async fn handle_ws_client(
     stream: tokio_websockets::WebSocketStream<tokio::net::TcpStream>,
-    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
 ) {
     let client_id = format!("{:?}", &stream);
     match handle_ws_client_inner(stream, stats).await {
@@ -45,7 +45,7 @@ async fn handle_ws_client(
 
 async fn handle_ws_client_inner(
     mut stream: tokio_websockets::WebSocketStream<tokio::net::TcpStream>,
-    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
 ) -> Result<(), Error> {
     let client_id = format!("{:?}", &stream);
     loop {

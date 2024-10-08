@@ -1,5 +1,5 @@
 pub async fn poll_stats(
-    stats: std::sync::Arc<tokio::sync::Mutex<yew_hello_world::Stats>>
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
 ) {
     println!("polling for stats");
 
