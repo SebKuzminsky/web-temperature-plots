@@ -50,7 +50,7 @@ async fn handle_tcp_client_inner(
     loop {
         let locked_stats = stats.lock().await;
         println!("{:#?}", *locked_stats);
-        serialized.send(*locked_stats).await?;
+        serialized.send(locked_stats.clone()).await?;
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
     }
 }

@@ -55,7 +55,7 @@ impl Plot {
 #[derive(Clone, PartialEq)]
 pub struct App {
     stats: Option<stats::Stats>,
-    plots: [Plot; 11],
+    plots: Vec<Plot>,
 }
 
 
@@ -80,19 +80,7 @@ impl Component for App {
         log!("App::create() is done");
         Self {
             stats: None,
-            plots: [
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-                Plot::default(),
-            ],
+            plots: vec![],
         }
     }
 
@@ -101,9 +89,13 @@ impl Component for App {
         match msg {
             Msg::Stats(s) => {
                 // log!(format!("got stats: {:#?}", s));
-                self.stats = Some(s);
-                for i in 0..=10 {
-                    self.plots[i].data.push((self.plots[i].data.len() as f32, s.temperatures[i]));
+                self.stats = Some(s.clone());
+                for (i, t) in s.temperatures.iter().enumerate() {
+                    if i >= self.plots.len() {
+                        self.plots.push(Plot::default());
+                    }
+                    let data_len = self.plots[i].data.len();
+                    self.plots[i].data.push((data_len as f32, *t));
                 }
                 ctx.link().send_message(Msg::Redraw);
             },
@@ -111,6 +103,7 @@ impl Component for App {
             Msg::Redraw => {
                 for (index, plot) in self.plots.iter().enumerate() {
                     // massage data into the format plotters wants
+                    // let x_max = usize::max(plot.data.len() - 1, 0);
                     let x_max = plot.data.len() - 1;
                     let y_max = plot.data
                         .iter()
@@ -124,7 +117,10 @@ impl Component for App {
                         .unwrap() - 1.0;
                     let line_series = LineSeries::new(plot.data.clone(), &RED);
 
-                    let element: web_sys::HtmlCanvasElement = plot.canvas.cast().unwrap();
+                    let element: web_sys::HtmlCanvasElement = match plot.canvas.cast() {
+                        Some(element) => element,
+                        None => continue,
+                    };
                     let _rect = element.get_bounding_client_rect();
                     let window_width = web_sys::window()
                         .expect("There should be a window")
@@ -190,7 +186,7 @@ impl Component for App {
         // let vnode = VNode::VRef(node);
         // vnode.into()
 
-        let stats_html = match self.stats {
+        let stats_html = match &self.stats {
             None => html!{<p>{"Waiting for stats..."}</p>},
             Some(s) => html!{<p>{format!("{:#?}", s)}</p>},
         };
@@ -202,17 +198,11 @@ impl Component for App {
                 {stats_html}
                 <hr/>
                 <center>
-                    <canvas ref={self.plots[0].canvas.clone()}/>
-                    <canvas ref={self.plots[1].canvas.clone()}/>
-                    <canvas ref={self.plots[2].canvas.clone()}/>
-                    <canvas ref={self.plots[3].canvas.clone()}/>
-                    <canvas ref={self.plots[4].canvas.clone()}/>
-                    <canvas ref={self.plots[5].canvas.clone()}/>
-                    <canvas ref={self.plots[6].canvas.clone()}/>
-                    <canvas ref={self.plots[7].canvas.clone()}/>
-                    <canvas ref={self.plots[8].canvas.clone()}/>
-                    <canvas ref={self.plots[9].canvas.clone()}/>
-                    <canvas ref={self.plots[10].canvas.clone()}/>
+                    {
+                        self.plots.clone().into_iter().map(|p| {
+                            html! { <canvas ref={p.canvas}/> }
+                        }).collect::<Html>()
+                    }
                 </center>
             </>
         }
