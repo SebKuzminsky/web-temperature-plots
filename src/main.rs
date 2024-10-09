@@ -56,6 +56,9 @@ impl Plot {
 pub struct App {
     stats: Option<stats::Stats>,
     plots: Vec<Plot>,
+    mousedown_cb: yew::Callback<web_sys::MouseEvent>,
+    mousemove_cb: yew::Callback<web_sys::MouseEvent>,
+    mouseup_cb: yew::Callback<web_sys::MouseEvent>,
 }
 
 
@@ -64,6 +67,17 @@ pub enum Msg {
     Stats(stats::Stats),
     Redraw,
     Ping,
+}
+
+
+fn log_mouse_event(e: &web_sys::MouseEvent) {
+    log!(format!("    (x, y): ({}, {})", e.x(), e.y()));
+    log!(format!("    (screen_x, screen_y): ({}, {})", e.screen_x(), e.screen_y()));
+    log!(format!("    (client_x, client_y): ({}, {})", e.client_x(), e.client_y()));
+    log!(format!("    (offset_x, offset_y): ({}, {})", e.offset_x(), e.offset_y()));
+    log!(format!("    (movement_x, movement_y): ({}, {})", e.movement_x(), e.movement_y()));
+    log!(format!("    button: {}", e.button()));
+    log!(format!("    buttons: {}", e.buttons()));
 }
 
 
@@ -77,10 +91,34 @@ impl Component for App {
         let stats_cb = ctx.link().callback(Msg::Stats);
         yew::platform::spawn_local(get_stats(stats_cb));
 
+        let mousedown_cb = ctx.link().callback(|e: MouseEvent| {
+            log!(format!("mouse down"));
+            log_mouse_event(&e);
+            // e.stop_propagation();
+            Msg::Ping
+        });
+
+        let mousemove_cb = ctx.link().callback(|e: MouseEvent| {
+            log!(format!("mouse move"));
+            log_mouse_event(&e);
+            // e.stop_propagation();
+            Msg::Ping
+        });
+
+        let mouseup_cb = ctx.link().callback(|e: MouseEvent| {
+            log!(format!("mouse up"));
+            log_mouse_event(&e);
+            // e.stop_propagation();
+            Msg::Ping
+        });
+
         log!("App::create() is done");
         Self {
             stats: None,
             plots: vec![],
+            mousedown_cb,
+            mouseup_cb,
+            mousemove_cb,
         }
     }
 
@@ -200,7 +238,7 @@ impl Component for App {
                 <center>
                     {
                         self.plots.clone().into_iter().map(|p| {
-                            html! { <canvas ref={p.canvas}/> }
+                            html! { <canvas ref={p.canvas} onmousedown={&self.mousedown_cb} onmouseup={&self.mouseup_cb} onmousemove={&self.mousemove_cb}/> }
                         }).collect::<Html>()
                     }
                 </center>
