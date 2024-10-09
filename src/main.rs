@@ -238,7 +238,14 @@ impl Component for App {
                 <center>
                     {
                         self.plots.clone().into_iter().map(|p| {
-                            html! { <canvas ref={p.canvas} onmousedown={&self.mousedown_cb} onmouseup={&self.mouseup_cb} onmousemove={&self.mousemove_cb}/> }
+                            html! {
+                                <canvas
+                                    ref={p.canvas}
+                                    onmousedown={&self.mousedown_cb}
+                                    onmouseup={&self.mouseup_cb}
+                                    onmousemove={&self.mousemove_cb}
+                                />
+                            }
                         }).collect::<Html>()
                     }
                 </center>
