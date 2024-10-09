@@ -1,8 +1,7 @@
-mod websockets;
-mod tcp;
-mod stats;
 mod error;
-
+mod stats;
+mod tcp;
+mod websockets;
 
 #[tokio::main]
 async fn main() {

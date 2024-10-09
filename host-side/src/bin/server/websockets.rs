@@ -2,19 +2,15 @@ use futures::prelude::*;
 
 use crate::error::Error;
 
-
-pub async fn ws_server(
-    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
-) {
+pub async fn ws_server(stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>) {
     loop {
         match ws_server_inner(std::sync::Arc::clone(&stats)).await {
             Ok(()) => println!("ws_server returned ok??"),
-            Err(e) =>  println!("ws_server returned error: {:#?}", e),
+            Err(e) => println!("ws_server returned error: {:#?}", e),
         };
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
 }
-
 
 async fn ws_server_inner(
     stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
@@ -24,16 +20,17 @@ async fn ws_server_inner(
     loop {
         let (tcp_stream, _) = tcp_listener.accept().await?;
         println!("ws_server accepted TCP connection");
-        let ws_stream = tokio_websockets::ServerBuilder::new().accept(tcp_stream).await?;
+        let ws_stream = tokio_websockets::ServerBuilder::new()
+            .accept(tcp_stream)
+            .await?;
         println!("accepted ws: {:#?}", ws_stream);
         tokio::spawn(handle_ws_client(ws_stream, std::sync::Arc::clone(&stats)));
     }
 }
 
-
 async fn handle_ws_client(
     stream: tokio_websockets::WebSocketStream<tokio::net::TcpStream>,
-    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
 ) {
     let client_id = format!("{:?}", &stream);
     match handle_ws_client_inner(stream, stats).await {
@@ -42,10 +39,9 @@ async fn handle_ws_client(
     }
 }
 
-
 async fn handle_ws_client_inner(
     mut stream: tokio_websockets::WebSocketStream<tokio::net::TcpStream>,
-    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
+    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>,
 ) -> Result<(), Error> {
     let client_id = format!("{:?}", &stream);
     loop {

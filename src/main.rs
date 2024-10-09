@@ -1,15 +1,13 @@
 use yew::{html, Component, Context, Html};
 
-use yew::prelude::*;
+use futures::StreamExt;
+use gloo_console::log;
 use plotters::prelude::*;
 use plotters_canvas::CanvasBackend;
-use gloo_console::log;
-use futures::StreamExt;
+use yew::prelude::*;
 
-
-mod stats;
 mod counter;
-
+mod stats;
 
 async fn get_stats(stats_cb: yew::Callback<stats::Stats>) {
     loop {
@@ -17,7 +15,7 @@ async fn get_stats(stats_cb: yew::Callback<stats::Stats>) {
             Ok(_) => (),
             Err(e) => {
                 log!(format!("error getting stats: {:#?}", e));
-            },
+            }
         };
         yew::platform::time::sleep(std::time::Duration::from_secs(1)).await;
     }
@@ -35,7 +33,6 @@ async fn get_stats_inner(stats_cb: &yew::Callback<stats::Stats>) -> Result<(), a
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 struct Plot {
     canvas: NodeRef,
@@ -51,7 +48,6 @@ impl Plot {
     }
 }
 
-
 #[derive(Clone, PartialEq)]
 pub struct App {
     stats: Option<stats::Stats>,
@@ -61,7 +57,6 @@ pub struct App {
     mouseup_cb: yew::Callback<web_sys::MouseEvent>,
 }
 
-
 #[derive(Debug)]
 pub enum Msg {
     Stats(stats::Stats),
@@ -69,17 +64,31 @@ pub enum Msg {
     Ping,
 }
 
-
 fn log_mouse_event(e: &web_sys::MouseEvent) {
     log!(format!("    (x, y): ({}, {})", e.x(), e.y()));
-    log!(format!("    (screen_x, screen_y): ({}, {})", e.screen_x(), e.screen_y()));
-    log!(format!("    (client_x, client_y): ({}, {})", e.client_x(), e.client_y()));
-    log!(format!("    (offset_x, offset_y): ({}, {})", e.offset_x(), e.offset_y()));
-    log!(format!("    (movement_x, movement_y): ({}, {})", e.movement_x(), e.movement_y()));
+    log!(format!(
+        "    (screen_x, screen_y): ({}, {})",
+        e.screen_x(),
+        e.screen_y()
+    ));
+    log!(format!(
+        "    (client_x, client_y): ({}, {})",
+        e.client_x(),
+        e.client_y()
+    ));
+    log!(format!(
+        "    (offset_x, offset_y): ({}, {})",
+        e.offset_x(),
+        e.offset_y()
+    ));
+    log!(format!(
+        "    (movement_x, movement_y): ({}, {})",
+        e.movement_x(),
+        e.movement_y()
+    ));
     log!(format!("    button: {}", e.button()));
     log!(format!("    buttons: {}", e.buttons()));
 }
-
 
 impl Component for App {
     type Message = Msg;
@@ -136,23 +145,27 @@ impl Component for App {
                     self.plots[i].data.push((data_len as f32, *t));
                 }
                 ctx.link().send_message(Msg::Redraw);
-            },
+            }
 
             Msg::Redraw => {
                 for (index, plot) in self.plots.iter().enumerate() {
                     // massage data into the format plotters wants
                     // let x_max = usize::max(plot.data.len() - 1, 0);
                     let x_max = plot.data.len() - 1;
-                    let y_max = plot.data
+                    let y_max = plot
+                        .data
                         .iter()
                         .map(|item| item.1)
                         .reduce(f32::max)
-                        .unwrap() + 1.0;
-                    let y_min = plot.data
+                        .unwrap()
+                        + 1.0;
+                    let y_min = plot
+                        .data
                         .iter()
                         .map(|item| item.1)
                         .reduce(f32::min)
-                        .unwrap() - 1.0;
+                        .unwrap()
+                        - 1.0;
                     let line_series = LineSeries::new(plot.data.clone(), &RED);
 
                     let element: web_sys::HtmlCanvasElement = match plot.canvas.cast() {
@@ -175,35 +188,41 @@ impl Component for App {
                         .expect("the height should be a number")
                         as u32;
                     let width = window_width - 30;
-                    let height = std::cmp::min(window_height - 30, window_width * 3/4);
+                    let height = std::cmp::min(window_height - 30, window_width * 3 / 4);
                     element.set_width(width);
                     element.set_height(height);
 
                     let backend = CanvasBackend::with_canvas_object(element).unwrap();
                     let drawing_area = backend.into_drawing_area();
-                    drawing_area.fill(&RGBColor(240,240,240)).unwrap();
+                    drawing_area.fill(&RGBColor(240, 240, 240)).unwrap();
 
                     let mut chart = ChartBuilder::on(&drawing_area)
-                        .caption(format!("Temperature {index}"), ("sans-serif", 14).into_font())
+                        .caption(
+                            format!("Temperature {index}"),
+                            ("sans-serif", 14).into_font(),
+                        )
                         .margin(5)
                         .x_label_area_size(25)
                         .y_label_area_size(50)
-                        .build_cartesian_2d(0_f32..(x_max as f32), y_min..y_max).unwrap();
+                        .build_cartesian_2d(0_f32..(x_max as f32), y_min..y_max)
+                        .unwrap();
 
-                    chart.configure_mesh()
+                    chart
+                        .configure_mesh()
                         .x_label_formatter(&|x| format!("{}", x.round()))
                         .y_label_formatter(&|y| format!("{y:.1}"))
                         .draw()
                         .unwrap();
 
                     chart
-                        .draw_series(line_series).unwrap()
+                        .draw_series(line_series)
+                        .unwrap()
                         .label("y = x^2")
                         .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
                 }
 
                 return false;
-            },
+            }
 
             Msg::Ping => log!("ping"),
         }
@@ -225,8 +244,8 @@ impl Component for App {
         // vnode.into()
 
         let stats_html = match &self.stats {
-            None => html!{<p>{"Waiting for stats..."}</p>},
-            Some(s) => html!{<p>{format!("{:#?}", s)}</p>},
+            None => html! {<p>{"Waiting for stats..."}</p>},
+            Some(s) => html! {<p>{format!("{:#?}", s)}</p>},
         };
 
         html! {
@@ -253,7 +272,6 @@ impl Component for App {
         }
     }
 }
-
 
 fn main() {
     // log!("started!");

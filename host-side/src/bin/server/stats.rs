@@ -1,6 +1,4 @@
-pub async fn poll_stats(
-    stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>
-) {
+pub async fn poll_stats(stats: std::sync::Arc<tokio::sync::Mutex<web_temperature_plots::Stats>>) {
     println!("polling for stats");
 
     loop {
@@ -12,7 +10,7 @@ pub async fn poll_stats(
                 println!("error globbing: {e:?}");
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
                 continue;
-            },
+            }
         };
 
         for try_filename in paths {
@@ -21,13 +19,15 @@ pub async fn poll_stats(
                 Err(e) => {
                     println!("failed to get filename: {e:?}");
                     continue;
-                },
+                }
             };
             let contents = std::fs::read_to_string(&filename)
-                .unwrap_or_else(|e|{todo!("failed to read file '{filename:?}': {e:?}")});
+                .unwrap_or_else(|e| todo!("failed to read file '{filename:?}': {e:?}"));
             let contents = contents.trim();
-            let t = contents.parse::<f32>()
-                .unwrap_or_else(|e| { todo!("failed to parse f32 from '{contents}': {e:?}") }) / 1_000.0;
+            let t = contents
+                .parse::<f32>()
+                .unwrap_or_else(|e| todo!("failed to parse f32 from '{contents}': {e:?}"))
+                / 1_000.0;
             temps.push(t);
         }
 

@@ -1,6 +1,5 @@
-use yew::prelude::*;
 use gloo_console::log;
-
+use yew::prelude::*;
 
 #[function_component]
 pub fn Counter() -> Html {
