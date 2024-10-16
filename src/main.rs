@@ -37,6 +37,9 @@ async fn get_stats_inner(stats_cb: &yew::Callback<stats::Stats>) -> Result<(), a
 struct Plot {
     canvas: NodeRef,
     data: Vec<(f32, f32)>,
+    // Optional index of right-hand side of the plot, follow new data
+    // if None.
+    x_max: Option<usize>,
 }
 
 impl Plot {
@@ -44,6 +47,7 @@ impl Plot {
         Self {
             canvas: NodeRef::default(),
             data: vec![],
+            x_max: None,
         }
     }
 }
@@ -151,7 +155,15 @@ impl Component for App {
                 for (index, plot) in self.plots.iter().enumerate() {
                     // massage data into the format plotters wants
                     // let x_max = usize::max(plot.data.len() - 1, 0);
-                    let x_max = plot.data.len() - 1;
+                    let x_max = match plot.x_max {
+                        None => plot.data.len() - 1,
+                        Some(x_max) => x_max,
+                    };
+                    let x_min = if x_max <= 10 {
+                        0
+                    } else {
+                        x_max - 10
+                    };
                     let y_max = plot
                         .data
                         .iter()
@@ -204,7 +216,7 @@ impl Component for App {
                         .margin(5)
                         .x_label_area_size(25)
                         .y_label_area_size(50)
-                        .build_cartesian_2d(0_f32..(x_max as f32), y_min..y_max)
+                        .build_cartesian_2d((x_min as f32)..(x_max as f32), y_min..y_max)
                         .unwrap();
 
                     chart
