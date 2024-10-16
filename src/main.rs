@@ -57,7 +57,6 @@ pub struct App {
     stats: Option<stats::Stats>,
     plots: Vec<Plot>,
     mousedown_cb: yew::Callback<web_sys::MouseEvent>,
-    mousemove_cb: yew::Callback<web_sys::MouseEvent>,
     mouseup_cb: yew::Callback<web_sys::MouseEvent>,
 }
 
@@ -65,33 +64,48 @@ pub struct App {
 pub enum Msg {
     Stats(stats::Stats),
     Redraw,
+    // plot index, MouseEvent, FIXME: maybe make this a struct?
+    MouseEvent(usize, yew::events::MouseEvent),
     Ping,
 }
 
 fn log_mouse_event(e: &web_sys::MouseEvent) {
-    log!(format!("    (x, y): ({}, {})", e.x(), e.y()));
-    log!(format!(
-        "    (screen_x, screen_y): ({}, {})",
-        e.screen_x(),
-        e.screen_y()
-    ));
-    log!(format!(
-        "    (client_x, client_y): ({}, {})",
-        e.client_x(),
-        e.client_y()
-    ));
-    log!(format!(
-        "    (offset_x, offset_y): ({}, {})",
-        e.offset_x(),
-        e.offset_y()
-    ));
+    // log!(format!("    (x, y): ({}, {})", e.x(), e.y()));
+    // log!(format!(
+    //     "    (screen_x, screen_y): ({}, {})",
+    //     e.screen_x(),
+    //     e.screen_y()
+    // ));
+    // log!(format!(
+    //     "    (client_x, client_y): ({}, {})",
+    //     e.client_x(),
+    //     e.client_y()
+    // ));
+    // log!(format!(
+    //     "    (offset_x, offset_y): ({}, {})",
+    //     e.offset_x(),
+    //     e.offset_y()
+    // ));
     log!(format!(
         "    (movement_x, movement_y): ({}, {})",
         e.movement_x(),
         e.movement_y()
     ));
-    log!(format!("    button: {}", e.button()));
+    // log!(format!("    related_target: {:?}", e.related_target()));
+    // log!(format!("    region: {:?}", e.region()));
+    // log!(format!("    view: {:?}", e.view()));
+    // log!(format!("    detail: {:?}", e.detail()));
+    // log!(format!("    which: {:?}", e.which()));
+    // log!(format!("    target: {:?}", e.target()));
+    // log!(format!("    current_target: {:?}", e.current_target()));
+    log!(format!("    ctrl_key: {}", e.ctrl_key()));
+    log!(format!("    alt_key: {}", e.alt_key()));
+    log!(format!("    shift_key: {}", e.shift_key()));
+    // log!(format!("    button: {}", e.button()));
     log!(format!("    buttons: {}", e.buttons()));
+
+    // let unwrapped_target = e.target().unwrap().dyn_ref::<web_sys::HtmlCanvasElement>().unwrap().clone();
+    // log!(format!("    unwrapped target: {:?}", unwrapped_target));
 }
 
 impl Component for App {
@@ -111,13 +125,6 @@ impl Component for App {
             Msg::Ping
         });
 
-        let mousemove_cb = ctx.link().callback(|e: MouseEvent| {
-            log!(format!("mouse move"));
-            log_mouse_event(&e);
-            // e.stop_propagation();
-            Msg::Ping
-        });
-
         let mouseup_cb = ctx.link().callback(|e: MouseEvent| {
             log!(format!("mouse up"));
             log_mouse_event(&e);
@@ -131,7 +138,6 @@ impl Component for App {
             plots: vec![],
             mousedown_cb,
             mouseup_cb,
-            mousemove_cb,
         }
     }
 
@@ -236,12 +242,43 @@ impl Component for App {
                 return false;
             }
 
+            Msg::MouseEvent(plot_index, e) => {
+                log!("handling MouseEvent message");
+                log!(format!("    plot_index is {plot_index}"));
+                log_mouse_event(&e);
+                if (e.buttons() & 0x1_u16) != 0 {
+                    log!("dragging with button 1");
+                    self.plots[plot_index].x_max = match self.plots[plot_index].x_max {
+                        None => {
+                            if e.movement_x() > 0 {
+                                let x_max: i32 = self.plots[plot_index].data.len() as i32 - e.movement_x();
+                                let x_max = i32::max(0, x_max) as usize;
+                                Some(x_max)
+                            } else {
+                                None
+                            }
+                        }
+                        Some(old_x_max) => {
+                            let x_max: i32 = old_x_max as i32 - e.movement_x();
+                            if x_max >= self.plots[plot_index].data.len() as i32 {
+                                None
+                            } else if x_max < 0 {
+                                Some(1)
+                            } else {
+                                Some(x_max as usize)
+                            }
+                        }
+                    };
+                    ctx.link().send_message(Msg::Redraw);
+                }
+            }
+
             Msg::Ping => log!("ping"),
         }
         true
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         // log!("App::view()");
 
         // insert an svg into the html:
@@ -268,13 +305,13 @@ impl Component for App {
                 <hr/>
                 <center>
                     {
-                        self.plots.clone().into_iter().map(|p| {
+                        self.plots.clone().into_iter().enumerate().map(|(i, p)| {
                             html! {
                                 <canvas
                                     ref={p.canvas}
                                     onmousedown={&self.mousedown_cb}
                                     onmouseup={&self.mouseup_cb}
-                                    onmousemove={&self.mousemove_cb}
+                                    onmousemove={ctx.link().callback(move |e| Msg::MouseEvent(i, e))}
                                 />
                             }
                         }).collect::<Html>()
