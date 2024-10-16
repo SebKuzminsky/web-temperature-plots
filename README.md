@@ -16,7 +16,7 @@ Build the web app using one of these commands:
 * `trunk serve`: Build the web app and start a temporary web server to
     serve it up.  The trunk process will also watch the source tree for
     changes and recompile and restart any running web apps, convenient
-    during development.
+    during development.  Install/update trunk with `cargo install trunk`.
 
 * `trunk build --public-url http://example.com/path/to/app`: Just build
     it, then you have to manually copy the `dist/` directory to the
