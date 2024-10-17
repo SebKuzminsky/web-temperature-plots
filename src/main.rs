@@ -184,7 +184,7 @@ impl Component for App {
                         .reduce(f32::min)
                         .unwrap()
                         - 1.0;
-                    let line_series = LineSeries::new(plot.data.clone(), &RED);
+                    let line_series = LineSeries::new(plot.data[x_min..=x_max].iter().cloned(), &RED);
 
                     let element: web_sys::HtmlCanvasElement = match plot.canvas.cast() {
                         Some(element) => element,
