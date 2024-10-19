@@ -165,11 +165,7 @@ impl Component for App {
                         None => plot.data.len() - 1,
                         Some(x_max) => x_max,
                     };
-                    let x_min = if x_max <= 10 {
-                        0
-                    } else {
-                        x_max - 10
-                    };
+                    let x_min = if x_max <= 10 { 0 } else { x_max - 10 };
                     let y_max = plot
                         .data
                         .iter()
@@ -184,7 +180,8 @@ impl Component for App {
                         .reduce(f32::min)
                         .unwrap()
                         - 1.0;
-                    let line_series = LineSeries::new(plot.data[x_min..=x_max].iter().cloned(), &RED);
+                    let line_series =
+                        LineSeries::new(plot.data[x_min..=x_max].iter().cloned(), &RED);
 
                     let element: web_sys::HtmlCanvasElement = match plot.canvas.cast() {
                         Some(element) => element,
@@ -251,7 +248,8 @@ impl Component for App {
                     self.plots[plot_index].x_max = match self.plots[plot_index].x_max {
                         None => {
                             if e.movement_x() > 0 {
-                                let x_max: i32 = self.plots[plot_index].data.len() as i32 - e.movement_x();
+                                let x_max: i32 =
+                                    self.plots[plot_index].data.len() as i32 - e.movement_x();
                                 let x_max = i32::max(0, x_max) as usize;
                                 Some(x_max)
                             } else {
