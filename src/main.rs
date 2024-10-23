@@ -9,6 +9,9 @@ use yew::prelude::*;
 mod counter;
 mod stats;
 
+mod plot;
+use plot::Plot;
+
 async fn get_stats(stats_cb: yew::Callback<stats::Stats>) {
     loop {
         match get_stats_inner(&stats_cb).await {
@@ -30,25 +33,6 @@ async fn get_stats_inner(stats_cb: &yew::Callback<stats::Stats>) -> Result<(), a
             stats_cb.emit(stats);
         }
         log!("disconnected");
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct Plot {
-    canvas: NodeRef,
-    data: Vec<(f32, f32)>,
-    // Optional index of right-hand side of the plot, follow new data
-    // if None.
-    x_max: Option<usize>,
-}
-
-impl Plot {
-    pub fn default() -> Self {
-        Self {
-            canvas: NodeRef::default(),
-            data: vec![],
-            x_max: None,
-        }
     }
 }
 
